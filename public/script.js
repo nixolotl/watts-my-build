@@ -1,5 +1,5 @@
 /* ============================================
-   WattsMyBudget: home page logic
+   WattsMyBuild: home page logic
    Needs shared.js and parts.js loaded first.
    Sections:
    1. SETUP         (shared helpers, parts)
@@ -38,6 +38,14 @@
     ];
 
     const partOf = (cat, sel) => PARTS[cat].items[sel[cat]];
+
+    // Picture for a part: its own photo (item.img) if it has one, otherwise the category's pixel icon.
+    // If a photo fails to load, the error handler near the bottom swaps in the icon.
+    function thumb(cat, item, cls = '') {
+        const icon = PARTS[cat].icon;
+        const photo = item && item.img;
+        return `<img class="thumb${photo ? ' thumb-photo' : ''} ${cls}" src="${esc(photo || icon)}" data-fallback="${esc(icon)}" alt="" width="48" height="48" loading="lazy" decoding="async">`;
+    }
 
     function psuIndexFor(sel) {
         const need = partOf('cpu', sel).watts + partOf('gpu', sel).watts + 150; // 150 W headroom
@@ -143,6 +151,7 @@
 
         const partsHTML = v.parts.map((p) => `
             <li class="part">
+                ${thumb(p.cat, p, 'part-thumb')}
                 <span class="part-cat">${esc(p.label)}${p.cat === 'psu' ? ' (auto-matched)' : ''}</span>
                 ${p.cat === 'psu' ? '' : `<button type="button" class="swap-btn" data-key="${esc(b.key)}" data-cat="${p.cat}" aria-label="Swap ${esc(p.label)}: ${esc(p.name)}">Swap</button>`}
                 <span class="part-name">${esc(p.name)}</span>
@@ -195,7 +204,7 @@
         const cat = swapCtx.cat;
         const baseTotal = totalOf(b.sel);
 
-        swapTitle.textContent = `Swap ${PARTS[cat].label.toLowerCase()}`;
+        swapTitle.textContent = `Swap ${cat === 'cpu' ? 'CPU' : PARTS[cat].label.toLowerCase()}`;
         swapSub.textContent = `Budget: ${money(currentBudget)}. The right column shows how the build total changes.`;
 
         swapList.innerHTML = PARTS[cat].items.map((item, i) => {
@@ -211,10 +220,11 @@
             return `
             <li>
                 <button type="button" class="swap-option${isCurrent ? ' current' : ''}" data-i="${i}" ${isCurrent || t.blocked ? 'disabled' : ''}>
+                    ${thumb(cat, item, 'swap-thumb')}
                     <span class="swap-main">
                         <strong>${esc(item.name)}</strong>
                         <span class="swap-spec">${esc(item.spec)}</span>
-                        ${flags.length ? `<span class="swap-flag">${esc(flags.join(' '))}</span>` : ''}
+                        ${flags.length ? `<span class="swap-flag">${esc(flags.join(' · '))}</span>` : ''}
                     </span>
                     <span class="swap-price">
                         <span>${money(item.price)}</span>
@@ -328,6 +338,13 @@
         renderCart();
     }
 
+    // Cart pictures come from the item id, so the saved cart format does not change.
+    function cartThumbs(id) {
+        const m = /^part-([a-z]+)-(\d+)$/.exec(id);
+        if (m && PARTS[m[1]]) return thumb(m[1], PARTS[m[1]].items[Number(m[2])], 'cart-thumb');
+        return `<span class="cart-thumbs" aria-hidden="true">${[...CATS, 'psu'].map((c) => `<img class="thumb cart-thumb-mini" src="${esc(PARTS[c].icon)}" alt="" width="20" height="20" loading="lazy">`).join('')}</span>`;
+    }
+
     function renderCart() {
         const count = cart.reduce((n, i) => n + i.qty, 0);
         const total = cart.reduce((n, i) => n + i.price * i.qty, 0);
@@ -340,6 +357,7 @@
         cartList.innerHTML = cart.map((i) => `
             <li class="cart-item">
                 <div class="cart-item-info">
+                    ${cartThumbs(i.id)}
                     <strong>${esc(i.name)}</strong>
                     <span class="cart-item-parts">${esc(i.parts.slice(0, 2).join(', '))}${i.parts.length > 2 ? ` +${i.parts.length - 2} more` : ''}</span>
                     <span class="cart-item-price">${money(i.price)} each</span>
@@ -427,6 +445,7 @@
             const note = partNote(shopCat, item);
             return `
             <li class="part-card">
+                <div class="part-card-pic">${thumb(shopCat, item)}</div>
                 <strong>${esc(item.name)}</strong>
                 <span class="part-spec">${esc(item.spec)}</span>
                 ${note ? `<span class="part-spec">${esc(note)}</span>` : ''}
@@ -462,6 +481,15 @@
         setTimeout(() => { btn.textContent = 'Add to cart'; }, 1200);
     });
     renderShop();
+
+    // If a part photo is missing or broken, show the category icon instead.
+    document.addEventListener('error', (e) => {
+        const img = e.target;
+        if (!(img instanceof HTMLImageElement) || !img.dataset.fallback) return;
+        if (img.src.endsWith(img.dataset.fallback)) return; // icon itself failed: stop
+        img.classList.remove('thumb-photo');
+        img.src = img.dataset.fallback;
+    }, true);
 
     renderCart();
 })();

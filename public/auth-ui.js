@@ -1,5 +1,5 @@
 /* ============================================
-   WattsMyBudget: login / sign-up dialog and the nav buttons
+   WattsMyBuild: login / sign-up dialog and the nav buttons
    Needs shared.js first, and an empty <span id="auth-slot"></span> in the nav.
    ============================================ */
 (() => {
@@ -35,7 +35,7 @@
                 <p class="hint" id="auth-hint"></p>
                 <button type="submit" class="btn" id="auth-submit">Log in</button>
                 <p class="message" id="auth-error" role="alert" hidden></p>
-                <p class="demo-note">School project demo: please don't use a password you use anywhere else.</p>
+                <p class="demo-note">Tip: don't reuse a password from another site.</p>
             </form>
         </div>`;
     document.body.appendChild(dialog);

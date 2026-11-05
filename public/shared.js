@@ -1,5 +1,5 @@
 /* ============================================
-   WattsMyBudget: shared helpers (loaded on every page)
+   WattsMyBuild: shared helpers (loaded on every page)
    Exposes one object: window.WMB
 
    Accounts and orders now live on the SERVER (see server.js).

@@ -3,7 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>WattsMyBudget | PC builds for your budget</title>
+    <link rel="icon" href="favicon.svg" type="image/svg+xml">
+    <title>WattsMyBuild | PC builds for your budget</title>
     <meta name="description" content="Enter your budget and get PC build combinations that fit it.">
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -14,7 +15,7 @@
 <body>
 
 <header class="nav">
-    <a class="logo" href="#top" aria-label="WattsMyBudget home">Watts<span>My</span>Budget</a>
+    <a class="logo" href="#top" aria-label="WattsMyBuild home">Watts<span>My</span>Build</a>
     <nav class="nav-links" aria-label="Main">
         <a href="#parts">Parts</a>
         <a href="#how">How it works</a>
@@ -34,10 +35,11 @@
         <div class="hero-text">
             <h1>Budget in.<br>Parts list out.</h1>
             <p class="lead">Type what you can spend and what the PC is for. You get three complete part lists that fit, priced line by line.</p>
-            <div class="hero-art" aria-hidden="true">
-                <svg class="heart" viewBox="0 0 9 8" shape-rendering="crispEdges"><path fill="#a98bff" d="M1 0h2v1h1v1h1V1h1V0h2v1h1v3H8v1H7v1H6v1H5v1H4V7H3V6H2V5H1V4H0V1h1z"/><path fill="#fff" d="M1 1h1v1H1z"/></svg>
-                <p class="dialogue">Set a budget. The parts list is on us.</p>
-            </div>
+            <ul class="perks">
+                <li><img src="img/icons/cpu.svg" alt="" width="40" height="40"><span><strong>Parts that fit</strong>Every CPU and board is AM5 + DDR5</span></li>
+                <li><img src="img/icons/psu.svg" alt="" width="40" height="40"><span><strong>Power matched</strong>We pick a PSU with spare watts</span></li>
+                <li><img src="img/icons/gpu.svg" alt="" width="40" height="40"><span><strong>Swap anything</strong>See the price change live</span></li>
+            </ul>
         </div>
 
         <form id="builder" class="card form" novalidate>
@@ -67,7 +69,6 @@
     <section id="results" class="results" hidden aria-live="polite">
         <h2 id="results-title"></h2>
         <div id="builds" class="builds"></div>
-        <p class="disclaimer">School project demo, not a real store. Prices come from the <a href="https://pcx.com.ph/pages/download-pc-express-pricelist" target="_blank" rel="noopener">PC Express dealer's price list</a> dated Nov 4, 2026 and may have changed since.</p>
     </section>
 
     <!-- PICK PARTS YOURSELF -->
@@ -91,14 +92,14 @@
 </main>
 
 <footer class="footer">
-    <span class="logo">Watts<span>My</span>Budget</span>
+    <span class="logo">Watts<span>My</span>Build</span>
     <nav class="footer-links" aria-label="Footer">
         <a href="about.html">About</a>
         <a href="shipping.html">Shipping</a>
         <a href="returns.html">Returns</a>
         <a href="contact.html">Contact</a>
     </nav>
-    <small>&copy; <span id="year"></span> WattsMyBudget. School project demo.</small>
+    <small>&copy; <span id="year"></span> WattsMyBuild.</small>
 </footer>
 
 <!-- CART DRAWER -->

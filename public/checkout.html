@@ -3,7 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Checkout | WattsMyBudget</title>
+    <link rel="icon" href="favicon.svg" type="image/svg+xml">
+    <title>Checkout | WattsMyBuild</title>
     <meta name="description" content="Check out your PC build.">
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -14,7 +15,7 @@
 <body>
 
 <header class="nav">
-    <a class="logo" href="index.html" aria-label="WattsMyBudget home">Watts<span>My</span>Budget</a>
+    <a class="logo" href="index.html" aria-label="WattsMyBuild home">Watts<span>My</span>Build</a>
     <nav class="nav-links" aria-label="Main">
         <a href="index.html#builder">Back to builds</a>
         <span id="auth-slot" class="auth-slot"></span>
@@ -36,7 +37,7 @@
         <h2>Thank you, <span id="conf-name"></span>!</h2>
         <p>Your order number is <strong id="conf-id" class="mono"></strong>.</p>
         <div id="conf-summary" class="conf-summary"></div>
-        <p class="hint">This is a school project demo, so nothing was charged and nothing will be shipped.</p>
+        <p class="hint">No payment has been taken yet. We will contact you about your order.</p>
         <div class="conf-actions">
             <a class="btn" id="conf-orders" href="orders.html" hidden>View my orders</a>
             <a class="btn btn-ghost" href="index.html">Back to home</a>
@@ -81,8 +82,8 @@
             <fieldset class="pay">
                 <legend>Payment method</legend>
                 <label class="radio"><input type="radio" name="payment" value="Cash on delivery" checked> Cash on delivery</label>
-                <label class="radio"><input type="radio" name="payment" value="GCash (demo)"> GCash (demo)</label>
-                <label class="radio"><input type="radio" name="payment" value="Bank transfer (demo)"> Bank transfer (demo)</label>
+                <label class="radio"><input type="radio" name="payment" value="GCash"> GCash</label>
+                <label class="radio"><input type="radio" name="payment" value="Bank transfer"> Bank transfer</label>
                 <p class="hint">No real payment is taken. This only records which method you picked.</p>
             </fieldset>
 
@@ -101,21 +102,21 @@
         <aside class="panel summary" aria-label="Order summary">
             <h2>Order summary</h2>
             <ul id="summary-items" class="summary-items"></ul>
-            <div class="summary-row"><span>Shipping</span><span>Free (demo)</span></div>
+            <div class="summary-row"><span>Shipping</span><span>Free</span></div>
             <div class="summary-row summary-total"><span>Total</span><strong id="summary-total" class="mono"></strong></div>
         </aside>
     </div>
 </main>
 
 <footer class="footer">
-    <span class="logo">Watts<span>My</span>Budget</span>
+    <span class="logo">Watts<span>My</span>Build</span>
     <nav class="footer-links" aria-label="Footer">
         <a href="about.html">About</a>
         <a href="shipping.html">Shipping</a>
         <a href="returns.html">Returns</a>
         <a href="contact.html">Contact</a>
     </nav>
-    <small>&copy; <span id="year"></span> WattsMyBudget. School project demo.</small>
+    <small>&copy; <span id="year"></span> WattsMyBuild.</small>
 </footer>
 
 <script src="shared.js"></script>

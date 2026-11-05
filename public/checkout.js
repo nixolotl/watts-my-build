@@ -1,5 +1,5 @@
 /* ============================================
-   WattsMyBudget: checkout page
+   WattsMyBuild: checkout page
    Guests can check out. Creating an account is optional.
    Needs shared.js and auth-ui.js loaded first.
    ============================================ */

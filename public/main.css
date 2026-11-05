@@ -1,5 +1,5 @@
 /* ============================================
-   WattsMyBudget: pixel RPG look
+   WattsMyBuild: pixel RPG look
    Colors and fonts live in :root. Stepped corners come from --notch.
    ============================================ */
 :root {
@@ -15,14 +15,22 @@
     --good: #7be0a8;
     --body: 'Atkinson Hyperlegible', system-ui, sans-serif;
     --px: 'Pixelify Sans', 'Atkinson Hyperlegible', sans-serif;
-    --wrap: 1100px;
+    --wrap: 1680px;
     --edge: max(1.25rem, calc((100% - var(--wrap)) / 2));
     --notch: 6px;
     --step: polygon(0 var(--notch), var(--notch) var(--notch), var(--notch) 0, calc(100% - var(--notch)) 0, calc(100% - var(--notch)) var(--notch), 100% var(--notch), 100% calc(100% - var(--notch)), calc(100% - var(--notch)) calc(100% - var(--notch)), calc(100% - var(--notch)) 100%, var(--notch) 100%, var(--notch) calc(100% - var(--notch)), 0 calc(100% - var(--notch)));
 }
 *, *::before, *::after { box-sizing: border-box; }
 html { scroll-behavior: smooth; scroll-padding-top: 5rem; }
-body { margin: 0; background: radial-gradient(60rem 30rem at 70% -5%, #1c1049 0%, transparent 70%), var(--bg); background-repeat: no-repeat; color: var(--ink); font: 400 1rem/1.65 var(--body); }
+body { margin: 0;
+    background:
+        radial-gradient(circle at 1px 1px, rgba(169, 139, 255, .13) 1px, transparent 1.5px) 0 0 / 28px 28px,
+        radial-gradient(50rem 34rem at 85% 8%, rgba(127, 86, 255, .34), transparent 70%),
+        radial-gradient(44rem 30rem at 5% 45%, rgba(255, 77, 106, .13), transparent 70%),
+        radial-gradient(52rem 34rem at 95% 78%, rgba(86, 160, 255, .16), transparent 70%),
+        radial-gradient(46rem 30rem at 12% 100%, rgba(127, 86, 255, .26), transparent 70%),
+        linear-gradient(180deg, #0d0724 0%, var(--bg) 100%);
+    background-attachment: fixed; color: var(--ink); font: 400 1rem/1.65 var(--body); }
 h1, h2, h3 { font-family: var(--px); font-weight: 600; line-height: 1.1; margin: 0 0 .7rem; }
 h1 { font-size: clamp(2.4rem, 4.8vw, 3.8rem); }
 h2 { font-size: 1.9rem; }
@@ -51,7 +59,7 @@ a:hover { color: #fff; }
 .nav-links a:not(.btn) { color: var(--dim); text-decoration: none; transition: color .15s; }
 .nav-links a:not(.btn):hover { color: #fff; }
 .auth-slot { display: inline-flex; gap: .6rem; align-items: center; }
-.footer { margin-top: 6rem; padding: 2rem var(--edge); display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 1rem; color: var(--dim); font-size: .9rem; border-top: 3px solid var(--panel-2); }
+.footer { margin-top: 6rem; padding: 2rem var(--edge); display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 1rem; color: var(--dim); font-size: .9rem; border-top: 3px solid transparent; border-image: linear-gradient(90deg, var(--purple), var(--heart), #56a0ff) 1; }
 .footer .logo { font-size: 1.3rem; }
 .footer-links { display: flex; gap: 1.3rem; }
 .footer-links a { color: var(--dim); text-decoration: none; }
@@ -67,14 +75,24 @@ a:hover { color: #fff; }
 .btn.btn-ghost:hover { background: var(--line); }
 
 /* hero */
-.hero { max-width: calc(var(--wrap) + 2.5rem); margin: 0 auto; padding: clamp(3rem, 8vw, 6rem) 1.25rem 2rem; display: grid; grid-template-columns: 1fr 420px; gap: clamp(2rem, 6vw, 5rem); align-items: center; }
+/* Full-width hero. Drop a photo at public/img/hero.jpg and it becomes the background.
+   The dark gradient on top keeps the text readable. With no photo you just get the gradient. */
+.hero {
+    min-height: calc(100svh - 4.3rem);
+    padding: clamp(3rem, 8vw, 6rem) var(--edge) 3rem;
+    display: grid; grid-template-columns: 1fr 420px; gap: clamp(2rem, 6vw, 5rem); align-items: center;
+    background:
+        linear-gradient(90deg, rgba(9, 5, 26, .88) 0%, rgba(9, 5, 26, .55) 35%, rgba(9, 5, 26, .12) 70%, rgba(9, 5, 26, .05) 100%),
+        linear-gradient(180deg, rgba(9, 5, 26, 0) 70%, var(--bg) 100%),
+        url('img/hero.jpg') center / cover no-repeat;
+}
 .hero-text h1 { margin-bottom: 1rem; }
-.lead { color: var(--dim); font-size: 1.15rem; max-width: 40ch; }
-.hero-art { display: flex; align-items: center; gap: 1.2rem; margin-top: 2rem; }
-.heart { width: 72px; height: 72px; image-rendering: pixelated; filter: drop-shadow(0 0 14px rgba(127, 86, 255, .8)); animation: bob 2.4s steps(4) infinite; flex: none; }
-@keyframes bob { 50% { transform: translateY(-6px); } }
-.dialogue { margin: 0; padding: .8rem 1rem; border: 3px solid #fff; background: #000; font-family: var(--px); font-size: 1.05rem; clip-path: var(--step); }
-.dialogue::before { content: '* '; color: var(--heart); }
+.lead { color: #d8cffa; font-size: 1.15rem; max-width: 40ch; }
+.perks { list-style: none; margin: 2rem 0 0; padding: 0; display: grid; gap: .7rem; max-width: 30rem; }
+.perks li { display: flex; align-items: center; gap: .9rem; padding: .6rem .9rem; background: rgba(9, 5, 26, .72); border: 3px solid var(--line); clip-path: var(--step); backdrop-filter: blur(4px); }
+.perks img { width: 40px; height: 40px; image-rendering: pixelated; flex: none; }
+.perks span { display: flex; flex-direction: column; font-size: .9rem; color: var(--dim); line-height: 1.35; }
+.perks strong { color: #fff; font-family: var(--px); font-size: 1.05rem; font-weight: 600; }
 
 .card { padding: 1.5rem; }
 .form label, .form legend { display: block; font-family: var(--px); font-weight: 600; font-size: 1.1rem; margin-bottom: .5rem; }
@@ -112,8 +130,9 @@ input[type="range"] { width: 100%; margin: 1.2rem 0 .3rem; accent-color: var(--p
 .meter-fill { height: 100%; background: repeating-linear-gradient(90deg, var(--purple-hi) 0 8px, transparent 8px 11px); }
 .meter-over .meter-fill { background: repeating-linear-gradient(90deg, var(--heart) 0 8px, transparent 8px 11px); }
 .parts { list-style: none; margin: 0 0 1.2rem; padding: 0; }
-.part { display: grid; grid-template-columns: 1fr auto; grid-template-areas: 'cat swap' 'name price' 'spec spec'; column-gap: 1rem; padding: .75rem 0; }
+.part { display: grid; grid-template-columns: auto 1fr auto; grid-template-areas: 'thumb cat swap' 'thumb name price' 'thumb spec spec'; column-gap: .9rem; padding: .75rem 0; }
 .part + .part { border-top: 1px solid rgba(168, 155, 214, .18); }
+.part-thumb { grid-area: thumb; align-self: center; }
 .part-cat { grid-area: cat; color: var(--purple-hi); font-size: .85rem; font-weight: 700; }
 .part .swap-btn { grid-area: swap; justify-self: end; }
 .part-name { grid-area: name; font-weight: 700; line-height: 1.35; }
@@ -151,6 +170,13 @@ input[type="range"] { width: 100%; margin: 1.2rem 0 .3rem; accent-color: var(--p
 .cart-item-info { display: flex; flex-direction: column; gap: .15rem; }
 .cart-item-parts { color: var(--dim); font-size: .85rem; }
 .cart-item-price { color: var(--purple-hi); font-weight: 700; }
+/* ---- pictures: pixel icons by default, real photos when a part has img ---- */
+.thumb { display: block; width: 48px; height: 48px; image-rendering: pixelated; flex: none; }
+.thumb-photo { image-rendering: auto; object-fit: contain; background: #fff; }
+.swap-thumb { align-self: center; }
+.cart-thumb { margin-bottom: .35rem; }
+.cart-thumbs { display: flex; flex-wrap: wrap; gap: 4px; margin-bottom: .35rem; }
+.cart-thumb-mini { width: 20px; height: 20px; }
 .qty { display: inline-flex; align-items: center; background: var(--bg); align-self: start; }
 .qty button { background: none; border: 0; color: #fff; width: 2rem; height: 2rem; cursor: pointer; font: inherit; }
 .qty button:hover { background: var(--purple); }
@@ -179,7 +205,7 @@ input[type="range"] { width: 100%; margin: 1.2rem 0 .3rem; accent-color: var(--p
 .swap-option:hover:not(:disabled) { background: var(--panel-2); border-color: var(--purple-hi); }
 .swap-option.current { border-color: #fff; }
 .swap-option:disabled:not(.current) { opacity: .45; cursor: not-allowed; }
-.swap-main { display: flex; flex-direction: column; gap: .15rem; }
+.swap-main { flex: 1; display: flex; flex-direction: column; gap: .15rem; }
 .swap-spec { color: var(--dim); font-size: .88rem; }
 .swap-flag { color: var(--purple-hi); font-size: .85rem; }
 .swap-price { display: flex; flex-direction: column; align-items: flex-end; white-space: nowrap; font-weight: 700; font-variant-numeric: tabular-nums; }
@@ -240,6 +266,12 @@ input[type="checkbox"], input[type="radio"] { accent-color: var(--purple); }
     .field-row { grid-template-columns: 1fr; }
     .nav-links a:not(.btn) { display: none; }
 }
+@media (max-width: 520px) {
+    .nav { padding-inline: 1rem; gap: .5rem; }
+    .logo { font-size: 1.2rem; }
+    .nav-links { gap: .5rem; }
+    .nav-links > .btn-small { display: none; }
+}
 @media (prefers-reduced-motion: reduce) { * { animation: none !important; transition: none !important; scroll-behavior: auto !important; } }
 
 /* admin page */
@@ -272,5 +304,10 @@ code { background: var(--panel-2); padding: .1rem .4rem; }
 .parts-grid { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 1rem; }
 .part-card { background: var(--panel); border: 3px solid var(--line); clip-path: var(--step); padding: 1.1rem; display: flex; flex-direction: column; gap: .25rem; }
 .part-card > .btn { margin-top: .6rem; }
+.part-card-pic { display: grid; place-items: center; height: 110px; margin-bottom: .6rem; background: var(--panel-2); }
+.part-card-pic .thumb { width: 72px; height: 72px; }
+.part-card-pic .thumb-photo { width: 100%; height: 100%; }
 .part-card .part-spec { color: var(--dim); font-size: .88rem; }
 .part-card-price { font: 600 1.5rem var(--px); margin-top: .5rem; }
+/* clip-path cuts off outside outlines, so draw the focus ring inside these */
+.btn:focus-visible, .cart-btn:focus-visible, .part-card:focus-within { outline-offset: -5px; }

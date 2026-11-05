@@ -1,5 +1,5 @@
 /* ============================================
-   WattsMyBudget: admin page
+   WattsMyBuild: admin page
    Needs shared.js and auth-ui.js loaded first.
    The server checks admin rights on every request (see /api/admin in server.js).
    ============================================ */

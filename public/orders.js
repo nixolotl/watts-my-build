@@ -1,5 +1,5 @@
 /* ============================================
-   WattsMyBudget: My orders page
+   WattsMyBuild: My orders page
    Needs shared.js and auth-ui.js loaded first.
    ============================================ */
 (() => {
