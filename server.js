@@ -24,7 +24,7 @@ app.use(cookieParser());
 
 const wrap = (fn) => (req, res, next) => Promise.resolve(fn(req, res, next)).catch(next);
 const sha256 = (s) => crypto.createHash('sha256').update(s).digest('hex');
-const publicUser = (u) => ({ id: u.id, name: u.name, email: u.email });
+const publicUser = (u) => ({ id: u.id, name: u.name, email: u.email, isAdmin: !!u.is_admin });
 const fail = (status, message) => Object.assign(new Error(message), { status });
 
 /* ---------- sessions ---------- */
@@ -44,7 +44,7 @@ app.use('/api', (req, res, next) => {
     const token = req.cookies[COOKIE_NAME];
     if (token) {
         req.user = db.prepare(`
-            SELECT u.id, u.name, u.email FROM sessions s JOIN users u ON u.id = s.user_id
+            SELECT u.id, u.name, u.email, u.is_admin FROM sessions s JOIN users u ON u.id = s.user_id
             WHERE s.token_hash = ? AND s.expires_at > ?`).get(sha256(token), Date.now()) || null;
     }
     next();
@@ -161,6 +161,66 @@ app.get('/api/orders', (req, res) => {
     if (!req.user) return res.status(401).json({ error: 'Log in to see your orders.' });
     const rows = db.prepare('SELECT * FROM orders WHERE user_id = ? ORDER BY created_at DESC').all(req.user.id);
     res.json({ orders: rows.map(formatOrder) });
+});
+
+/* ---------- admin ---------- */
+// An admin is a normal account with is_admin = 1. Make one with:  node make-admin.js you@example.com
+const ORDER_STATUSES = ['Placed', 'Processing', 'Shipped', 'Delivered', 'Cancelled'];
+const PAYMENT_STATUSES = ['unpaid', 'paid', 'refunded'];
+
+function requireAdmin(req, res, next) {
+    res.set('Cache-Control', 'no-store');
+    if (!req.user) return next(fail(401, 'Log in to use the admin page.'));
+    if (!req.user.is_admin) return next(fail(403, 'This account is not an admin.'));
+    next();
+}
+
+app.get('/api/admin/stats', requireAdmin, (req, res) => {
+    const n = (sql, ...p) => db.prepare(sql).get(...p).n;
+    const manila = new Date(Date.now() + 8 * 3600 * 1000).toISOString().slice(0, 10); // "today" in Philippine time
+    const since = new Date(manila + 'T00:00:00+08:00').toISOString();
+    const byStatus = db.prepare('SELECT status, COUNT(*) AS n FROM orders GROUP BY status').all();
+    res.json({
+        orders: n('SELECT COUNT(*) AS n FROM orders'),
+        today: n('SELECT COUNT(*) AS n FROM orders WHERE created_at >= ?', since),
+        revenue: n("SELECT COALESCE(SUM(total), 0) AS n FROM orders WHERE status != 'Cancelled'"),
+        paid: n("SELECT COALESCE(SUM(total), 0) AS n FROM orders WHERE payment_status = 'paid'"),
+        customers: n('SELECT COUNT(*) AS n FROM users'),
+        byStatus: Object.fromEntries(byStatus.map((r) => [r.status, r.n]))
+    });
+});
+
+app.get('/api/admin/orders', requireAdmin, (req, res) => {
+    const status = String(req.query.status || '');
+    const q = String(req.query.q || '').trim().toLowerCase().replace(/[%_]/g, '');
+    const where = [];
+    const params = [];
+    if (ORDER_STATUSES.includes(status)) { where.push('status = ?'); params.push(status); }
+    if (q) {
+        where.push('(lower(id) LIKE ? OR lower(customer_name) LIKE ? OR lower(customer_email) LIKE ?)');
+        params.push(`%${q}%`, `%${q}%`, `%${q}%`);
+    }
+    const rows = db.prepare(`SELECT * FROM orders ${where.length ? 'WHERE ' + where.join(' AND ') : ''}
+                             ORDER BY created_at DESC LIMIT 200`).all(...params);
+    res.json({ orders: rows.map(formatOrder) });
+});
+
+app.patch('/api/admin/orders/:id', requireAdmin, (req, res) => {
+    const { status, paymentStatus } = req.body || {};
+    if (status !== undefined && !ORDER_STATUSES.includes(status)) throw fail(400, 'Unknown order status.');
+    if (paymentStatus !== undefined && !PAYMENT_STATUSES.includes(paymentStatus)) throw fail(400, 'Unknown payment status.');
+    const info = db.prepare('UPDATE orders SET status = COALESCE(?, status), payment_status = COALESCE(?, payment_status) WHERE id = ?')
+        .run(status ?? null, paymentStatus ?? null, req.params.id);
+    if (!info.changes) throw fail(404, 'Order not found.');
+    res.json({ order: formatOrder(db.prepare('SELECT * FROM orders WHERE id = ?').get(req.params.id)) });
+});
+
+app.get('/api/admin/customers', requireAdmin, (req, res) => {
+    res.json({ customers: db.prepare(`
+            SELECT u.id, u.name, u.email, u.created_at AS createdAt, u.is_admin AS isAdmin, COUNT(o.id) AS orders,
+                   COALESCE(SUM(CASE WHEN o.status != 'Cancelled' THEN o.total END), 0) AS spent
+            FROM users u LEFT JOIN orders o ON o.user_id = u.id
+            GROUP BY u.id ORDER BY u.created_at DESC LIMIT 200`).all() });
 });
 
 app.use('/api', (req, res) => res.status(404).json({ error: 'Not found.' }));

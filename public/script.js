@@ -32,9 +32,9 @@
 
     // factor = how much of the budget this tier is allowed to spend
     const TIERS = [
-        { key: 'value',    label: 'Value',    factor: 0.80, badge: 'Saves money' },
-        { key: 'balanced', label: 'Balanced', factor: 0.92, badge: 'Best pick', featured: true },
-        { key: 'max',      label: 'Max',      factor: 1.00, badge: 'Uses it all' }
+        { key: 'value',    label: 'Value',    factor: 0.80, badge: 'Spends 80%' },
+        { key: 'balanced', label: 'Balanced', factor: 0.92, badge: 'Spends 92%', featured: true },
+        { key: 'max',      label: 'Max',      factor: 1.00, badge: 'Spends 100%' }
     ];
 
     const partOf = (cat, sel) => PARTS[cat].items[sel[cat]];
@@ -155,7 +155,7 @@
             <span class="badge">${esc(b.tier.badge)}</span>
             <h3>${esc(b.tier.label)} build${edited ? ' <span class="edited-tag">Edited</span>' : ''}</h3>
             <div class="total">${money(v.total)}</div>
-            <p class="remaining">${left >= 0 ? `${money(left)} left of your budget` : `<span class="over">${money(-left)} over your budget</span>`}</p>
+            <p class="remaining">${left >= 0 ? `${money(left)} unspent` : `<span class="over">${money(-left)} over budget</span>`}</p>
             <div class="meter${left < 0 ? ' meter-over' : ''}" aria-hidden="true"><div class="meter-fill" style="width:${pct.toFixed(1)}%"></div></div>
             <ul class="parts">${partsHTML}</ul>
             ${b.notice ? `<p class="notice" role="status">${esc(b.notice)}</p>` : ''}
@@ -174,11 +174,11 @@
         resultsSection.hidden = false;
 
         if (!currentBuilds.length) {
-            resultsTitle.textContent = 'Budget too low';
-            buildsEl.innerHTML = '<p>That budget is below the cheapest complete build we can put together. Try a higher amount.</p>';
+            resultsTitle.textContent = 'Budget too low for a full build';
+            buildsEl.innerHTML = '<p>The cheapest complete build costs more than that. Raise the budget and run it again.</p>';
             return;
         }
-        resultsTitle.textContent = `${USE_LABELS[usecase]} builds for ${money(budget)}`;
+        resultsTitle.textContent = `${USE_LABELS[usecase]} builds, ${money(budget)} budget`;
         renderBuilds();
         resultsSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
     }
@@ -196,7 +196,7 @@
         const baseTotal = totalOf(b.sel);
 
         swapTitle.textContent = `Swap ${PARTS[cat].label.toLowerCase()}`;
-        swapSub.textContent = `Your budget is ${money(currentBudget)}. Prices show how the build total changes.`;
+        swapSub.textContent = `Budget: ${money(currentBudget)}. The right column shows how the build total changes.`;
 
         swapList.innerHTML = PARTS[cat].items.map((item, i) => {
             const t = trySwap(b.sel, cat, i);
@@ -385,7 +385,7 @@
             const b = currentBuilds.find((x) => x.key === addBtn.dataset.key);
             if (!b) return;
             addToCart(b);
-            addBtn.textContent = 'Added ✓';
+            addBtn.textContent = 'Added to cart';
             setTimeout(() => { addBtn.textContent = 'Add to cart'; }, 1200);
         }
     });

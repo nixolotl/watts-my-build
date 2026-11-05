@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="robots" content="noindex">
+    <title>Admin | WattsMyBudget</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&family=Pixelify+Sans:wght@400;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="main.css">
+</head>
+<body>
+
+<header class="nav">
+    <a class="logo" href="index.html" aria-label="WattsMyBudget home">Watts<span>My</span>Budget</a>
+    <nav class="nav-links" aria-label="Main">
+        <a href="index.html">View site</a>
+        <span id="auth-slot" class="auth-slot"></span>
+    </nav>
+</header>
+
+<main class="page page-wide">
+    <h1 class="page-title">Admin</h1>
+
+    <section id="admin-login" class="panel" hidden>
+        <p>Log in with an admin account to see orders.</p>
+        <button type="button" class="btn" id="admin-login-btn">Log in</button>
+    </section>
+
+    <section id="admin-denied" class="panel" hidden>
+        <p>This account is not an admin. To make it one, run <code>node make-admin.js your@email.com</code> in the project folder, then reload this page.</p>
+    </section>
+
+    <div id="admin-app" hidden>
+        <div id="stats" class="stats"></div>
+
+        <div class="admin-bar">
+            <div class="tabs" role="group" aria-label="Admin sections">
+                <button type="button" class="tab active" data-tab="orders">Orders</button>
+                <button type="button" class="tab" data-tab="customers">Customers</button>
+            </div>
+            <div class="admin-filters" id="order-filters">
+                <label class="inline">Status
+                    <select id="f-status">
+                        <option value="">All</option>
+                        <option>Placed</option><option>Processing</option><option>Shipped</option><option>Delivered</option><option>Cancelled</option>
+                    </select>
+                </label>
+                <label class="inline">Search
+                    <input id="f-search" type="search" placeholder="Order no., name or email">
+                </label>
+            </div>
+            <button type="button" class="btn btn-small btn-ghost" id="refresh">Refresh</button>
+        </div>
+
+        <p class="message" id="admin-error" role="alert" hidden></p>
+        <div id="admin-orders" class="orders-list"></div>
+        <div id="admin-customers" class="panel table-wrap" hidden></div>
+    </div>
+</main>
+
+<footer class="footer">
+    <span class="logo">Watts<span>My</span>Budget</span>
+    <nav class="footer-links" aria-label="Footer">
+        <a href="about.html">About</a>
+        <a href="shipping.html">Shipping</a>
+        <a href="returns.html">Returns</a>
+        <a href="contact.html">Contact</a>
+    </nav>
+    <small>&copy; <span id="year"></span> WattsMyBudget. School project demo.</small>
+</footer>
+
+<script src="shared.js"></script>
+<script src="auth-ui.js"></script>
+<script src="admin.js"></script>
+</body>
+</html>

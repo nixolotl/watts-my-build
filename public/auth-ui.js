@@ -106,7 +106,7 @@
         if (!slot) return;
         const user = getUser();
         slot.innerHTML = user
-            ? `<a href="orders.html" class="btn btn-small btn-ghost">My orders</a>
+            ? `${user.isAdmin ? '<a href="admin.html" class="btn btn-small btn-ghost">Admin</a>' : ''}<a href="orders.html" class="btn btn-small btn-ghost">My orders</a>
                <button type="button" class="btn btn-small btn-ghost" id="logout-btn" title="Signed in as ${esc(user.email)}">Log out (${esc(user.name.split(' ')[0])})</button>`
             : `<button type="button" class="btn btn-small btn-ghost" id="login-open">Log in</button>`;
     }
