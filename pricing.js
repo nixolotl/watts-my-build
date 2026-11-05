@@ -21,6 +21,7 @@ const USE_LABELS = { gaming: 'Gaming', work: 'Work & study', editing: 'Video edi
 const TIER_LABELS = { value: 'Value', balanced: 'Balanced', max: 'Max' };
 const ID_PATTERN = /^(gaming|work|editing)-(value|balanced|max)-(\d+(?:-\d+){6})$/;
 const MAX_QTY = 10;
+const PART_PATTERN = /^part-(cpu|gpu|ram|storage|board|case|cooler|psu)-(\d+)$/; // a single part: part-<category>-<number>
 const ALLOWED_PAYMENTS = ['Cash on delivery', 'GCash (demo)', 'Bank transfer (demo)'];
 
 // An error that is safe to show to the customer.
@@ -38,6 +39,13 @@ function priceCartItem(raw) {
     const m = ID_PATTERN.exec(String((raw && raw.id) || ''));
     const qty = Number(raw && raw.qty);
     const invalid = 'A build in your cart is no longer valid. Please remove it and add it again.';
+    const single = PART_PATTERN.exec(String((raw && raw.id) || ''));
+    if (single) {
+        const item = PARTS[single[1]].items[Number(single[2])];
+        if (!item) throw new OrderError(invalid);
+        if (!Number.isInteger(qty) || qty < 1 || qty > MAX_QTY) throw new OrderError(`Quantity must be between 1 and ${MAX_QTY}.`);
+        return { buildId: single[0], name: item.name, price: item.price, qty, parts: [`${PARTS[single[1]].label}: ${item.spec}`] };
+    }
     if (!m) throw new OrderError(invalid);
     if (!Number.isInteger(qty) || qty < 1 || qty > MAX_QTY) throw new OrderError(`Quantity must be between 1 and ${MAX_QTY}.`);
 

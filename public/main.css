@@ -264,3 +264,13 @@ select:focus-visible, input[type="search"]:focus-visible { outline: none; border
 .table th { text-align: left; color: var(--purple-hi); font: 600 1rem var(--px); padding: .5rem .8rem; }
 .table td { padding: .6rem .8rem; border-top: 1px solid rgba(168, 155, 214, .18); }
 code { background: var(--panel-2); padding: .1rem .4rem; }
+
+/* pick parts yourself */
+.shop { max-width: calc(var(--wrap) + 2.5rem); margin: 5rem auto 0; padding: 0 1.25rem; }
+.shop .tabs { flex-wrap: wrap; margin: 1.5rem 0; }
+.shop .tab { flex: none; padding: .6rem 1.1rem; }
+.parts-grid { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 1rem; }
+.part-card { background: var(--panel); border: 3px solid var(--line); clip-path: var(--step); padding: 1.1rem; display: flex; flex-direction: column; gap: .25rem; }
+.part-card > .btn { margin-top: .6rem; }
+.part-card .part-spec { color: var(--dim); font-size: .88rem; }
+.part-card-price { font: 600 1.5rem var(--px); margin-top: .5rem; }

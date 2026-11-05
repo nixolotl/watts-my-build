@@ -341,7 +341,7 @@
             <li class="cart-item">
                 <div class="cart-item-info">
                     <strong>${esc(i.name)}</strong>
-                    <span class="cart-item-parts">${esc(i.parts.slice(0, 2).join(', '))} +${i.parts.length - 2} more</span>
+                    <span class="cart-item-parts">${esc(i.parts.slice(0, 2).join(', '))}${i.parts.length > 2 ? ` +${i.parts.length - 2} more` : ''}</span>
                     <span class="cart-item-price">${money(i.price)} each</span>
                 </div>
                 <div class="qty" role="group" aria-label="Quantity for ${esc(i.name)}">
@@ -406,6 +406,62 @@
         if (e.key === 'Escape' && drawer.classList.contains('open')) closeCart();
     });
     checkoutBtn.addEventListener('click', () => { window.location.href = 'checkout.html'; });
+
+    /* ---------- 7. PARTS SHOP (single parts) ---------- */
+    const SHOP_CATS = [...CATS, 'psu'];
+    const tabsEl = $('parts-tabs');
+    const gridEl = $('parts-grid');
+    let shopCat = 'cpu';
+
+    function partNote(cat, item) {
+        const bits = [];
+        if (item.watts) bits.push(`${item.watts} W`);
+        if (cat === 'cpu' && item.minCooler > 0) bits.push(`needs ${PARTS.cooler.items[item.minCooler].name} or stronger`);
+        return bits.join(', ');
+    }
+
+    function renderShop() {
+        tabsEl.innerHTML = SHOP_CATS.map((c) => `
+            <button type="button" class="tab${c === shopCat ? ' active' : ''}" data-cat="${c}" aria-pressed="${c === shopCat}">${esc(PARTS[c].label)}</button>`).join('');
+        gridEl.innerHTML = PARTS[shopCat].items.map((item, i) => {
+            const note = partNote(shopCat, item);
+            return `
+            <li class="part-card">
+                <strong>${esc(item.name)}</strong>
+                <span class="part-spec">${esc(item.spec)}</span>
+                ${note ? `<span class="part-spec">${esc(note)}</span>` : ''}
+                <span class="part-card-price">${money(item.price)}</span>
+                <button type="button" class="btn btn-small add-part" data-cat="${shopCat}" data-i="${i}">Add to cart</button>
+            </li>`;
+        }).join('');
+    }
+
+    function addPart(cat, i) {
+        const item = PARTS[cat] && PARTS[cat].items[i];
+        if (!item) return;
+        const id = `part-${cat}-${i}`;   // the server prices this id itself (see pricing.js)
+        const existing = cart.find((x) => x.id === id);
+        if (existing) existing.qty += 1;
+        else cart.push({ id, name: item.name, price: item.price, qty: 1, parts: [`${PARTS[cat].label}: ${item.spec}`] });
+        saveCart();
+        renderCart();
+    }
+
+    tabsEl.addEventListener('click', (e) => {
+        const tab = e.target.closest('.tab');
+        if (!tab) return;
+        shopCat = tab.dataset.cat;
+        renderShop();
+        tabsEl.querySelector(`[data-cat="${shopCat}"]`).focus();
+    });
+    gridEl.addEventListener('click', (e) => {
+        const btn = e.target.closest('.add-part');
+        if (!btn) return;
+        addPart(btn.dataset.cat, Number(btn.dataset.i));
+        btn.textContent = 'Added to cart';
+        setTimeout(() => { btn.textContent = 'Add to cart'; }, 1200);
+    });
+    renderShop();
 
     renderCart();
 })();
