@@ -606,3 +606,8 @@ input[type="range"] { width: 100%; accent-color: var(--teal); }
 @media (max-width: 800px) {
     .contact-layout { grid-template-columns: 1fr; }
 }
+
+/* Keep the footer at the bottom on short pages */
+body { min-height: 100vh; display: flex; flex-direction: column; }
+.page { width: 100%; }
+.footer { margin-top: auto; }

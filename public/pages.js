@@ -6,7 +6,7 @@
     'use strict';
 
     // CHANGE THIS to your real email address. It is the only place you need to edit it.
-    const CONTACT_EMAIL = 'hello@wattsmybudget.example';
+    const CONTACT_EMAIL = 'hello@wattsmybudget.com';
 
     const year = document.getElementById('year');
     if (year) year.textContent = new Date().getFullYear();
