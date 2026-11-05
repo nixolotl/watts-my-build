@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Checkout | WattsMyBudget</title>
+    <meta name="description" content="Check out your PC build.">
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;700&family=Michroma&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="main.css">
+</head>
+<body>
+
+<header class="nav">
+    <a class="logo" href="index.html" aria-label="WattsMyBudget home">Watts<span>My</span>Budget</a>
+    <nav class="nav-links" aria-label="Main">
+        <a href="index.html#builder">Back to builds</a>
+        <span id="auth-slot" class="auth-slot"></span>
+    </nav>
+</header>
+
+<main class="page">
+    <h1 class="page-title">Checkout</h1>
+
+    <!-- shown when the cart has nothing in it -->
+    <section id="empty-state" class="panel" hidden>
+        <p>Your cart is empty.</p>
+        <a class="btn" href="index.html#builder">Build a PC</a>
+    </section>
+
+    <!-- shown after the order is placed -->
+    <section id="confirmation" class="panel confirmation" hidden aria-live="polite">
+        <p class="eyebrow-dark">Order placed</p>
+        <h2>Thank you, <span id="conf-name"></span>!</h2>
+        <p>Your order number is <strong id="conf-id" class="mono"></strong>.</p>
+        <div id="conf-summary" class="conf-summary"></div>
+        <p class="hint">This is a school project demo, so nothing was charged and nothing will be shipped.</p>
+        <div class="conf-actions">
+            <a class="btn" id="conf-orders" href="orders.html" hidden>View my orders</a>
+            <a class="btn btn-ghost" href="index.html">Back to home</a>
+        </div>
+    </section>
+
+    <div id="checkout-layout" class="checkout-layout" hidden>
+        <form id="checkout-form" class="panel" novalidate>
+            <div id="login-banner" class="login-banner" hidden>
+                <span>Have an account?</span>
+                <button type="button" class="link-btn" id="banner-login">Log in</button>
+                <span>to fill in your details, or continue as a guest.</span>
+            </div>
+
+            <h2>Delivery details</h2>
+            <label class="field">Full name
+                <input id="f-name" type="text" autocomplete="name" required>
+                <span class="field-error" id="e-name" hidden></span>
+            </label>
+            <label class="field">Email
+                <input id="f-email" type="email" autocomplete="email" required>
+                <span class="field-error" id="e-email" hidden></span>
+            </label>
+            <label class="field">Mobile number
+                <input id="f-phone" type="tel" autocomplete="tel" placeholder="09XX XXX XXXX" required>
+                <span class="field-error" id="e-phone" hidden></span>
+            </label>
+            <label class="field">Street address, barangay
+                <input id="f-address" type="text" autocomplete="street-address" required>
+                <span class="field-error" id="e-address" hidden></span>
+            </label>
+            <div class="field-row">
+                <label class="field">City / municipality
+                    <input id="f-city" type="text" autocomplete="address-level2" required>
+                    <span class="field-error" id="e-city" hidden></span>
+                </label>
+                <label class="field">Postal code
+                    <input id="f-zip" type="text" inputmode="numeric" autocomplete="postal-code">
+                </label>
+            </div>
+
+            <fieldset class="pay">
+                <legend>Payment method</legend>
+                <label class="radio"><input type="radio" name="payment" value="Cash on delivery" checked> Cash on delivery</label>
+                <label class="radio"><input type="radio" name="payment" value="GCash (demo)"> GCash (demo)</label>
+                <label class="radio"><input type="radio" name="payment" value="Bank transfer (demo)"> Bank transfer (demo)</label>
+                <p class="hint">No real payment is taken. This only records which method you picked.</p>
+            </fieldset>
+
+            <div id="account-offer" class="account-offer" hidden>
+                <label class="radio"><input type="checkbox" id="f-create"> Create an account with these details</label>
+                <label class="field" id="pw-row" hidden>Choose a password (8+ characters)
+                    <input id="f-password" type="password" autocomplete="new-password">
+                    <span class="field-error" id="e-password" hidden></span>
+                </label>
+            </div>
+
+            <button type="submit" class="btn" id="place-order">Place order</button>
+            <p class="message" id="checkout-error" role="alert" hidden></p>
+        </form>
+
+        <aside class="panel summary" aria-label="Order summary">
+            <h2>Order summary</h2>
+            <ul id="summary-items" class="summary-items"></ul>
+            <div class="summary-row"><span>Shipping</span><span>Free (demo)</span></div>
+            <div class="summary-row summary-total"><span>Total</span><strong id="summary-total" class="mono"></strong></div>
+        </aside>
+    </div>
+</main>
+
+<footer class="footer">
+    <span class="logo">Watts<span>My</span>Budget</span>
+    <nav class="footer-links" aria-label="Footer">
+        <a href="about.html">About</a>
+        <a href="shipping.html">Shipping</a>
+        <a href="returns.html">Returns</a>
+        <a href="contact.html">Contact</a>
+    </nav>
+    <small>&copy; <span id="year"></span> WattsMyBudget. School project demo.</small>
+</footer>
+
+<script src="shared.js"></script>
+<script src="auth-ui.js"></script>
+<script src="checkout.js"></script>
+</body>
+</html>

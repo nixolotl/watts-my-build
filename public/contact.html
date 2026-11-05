@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Contact | WattsMyBudget</title>
+    <meta name="description" content="Get in touch with WattsMyBudget.">
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;700&family=Michroma&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="main.css">
+</head>
+<body>
+
+<header class="nav">
+    <a class="logo" href="index.html" aria-label="WattsMyBudget home">Watts<span>My</span>Budget</a>
+    <nav class="nav-links" aria-label="Main">
+        <a href="index.html#builder">Back to builds</a>
+        <span id="auth-slot" class="auth-slot"></span>
+    </nav>
+</header>
+
+<main class="page">
+    <h1 class="page-title">Contact</h1>
+
+    <div class="contact-layout">
+        <section class="panel prose">
+            <h2>Get in touch</h2>
+            <p>Questions about a build, an order, or a return? Send us a message and we will reply as soon as we can.</p>
+            <p><strong>Email:</strong> <a data-contact-email href="#"></a></p>
+            <p><strong>Phone:</strong> 0917 123 4567</p>
+            <p><strong>Hours:</strong> Monday to Saturday, 9:00 AM to 6:00 PM</p>
+            <p><strong>Location:</strong> Davao City, Philippines</p>
+            <p class="hint">Please include your order number if your question is about an order. See also <a href="shipping.html">Shipping</a> and <a href="returns.html">Returns</a>.</p>
+        </section>
+
+        <form id="contact-form" class="panel" novalidate>
+            <h2>Send a message</h2>
+            <label class="field">Your name
+                <input id="c-name" type="text" autocomplete="name" required>
+            </label>
+            <label class="field">Your email
+                <input id="c-email" type="email" autocomplete="email" required>
+            </label>
+            <label class="field">Message
+                <textarea id="c-message" rows="6" required></textarea>
+            </label>
+            <button type="submit" class="btn">Send message</button>
+            <p class="message" id="contact-error" role="alert" hidden></p>
+            <p class="hint" id="contact-note">This opens your email app with the message ready to send. If nothing opens, email us directly at <span data-contact-email></span>.</p>
+        </form>
+    </div>
+</main>
+
+<footer class="footer">
+    <span class="logo">Watts<span>My</span>Budget</span>
+    <nav class="footer-links" aria-label="Footer">
+        <a href="about.html">About</a>
+        <a href="shipping.html">Shipping</a>
+        <a href="returns.html">Returns</a>
+        <a href="contact.html">Contact</a>
+    </nav>
+    <small>&copy; <span id="year"></span> WattsMyBudget. School project demo.</small>
+</footer>
+
+<script src="shared.js"></script>
+<script src="auth-ui.js"></script>
+<script src="pages.js"></script>
+</body>
+</html>

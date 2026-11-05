@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>My orders | WattsMyBudget</title>
+    <meta name="description" content="Your WattsMyBudget orders.">
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;700&family=Michroma&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="main.css">
+</head>
+<body>
+
+<header class="nav">
+    <a class="logo" href="index.html" aria-label="WattsMyBudget home">Watts<span>My</span>Budget</a>
+    <nav class="nav-links" aria-label="Main">
+        <a href="index.html#builder">Back to builds</a>
+        <span id="auth-slot" class="auth-slot"></span>
+    </nav>
+</header>
+
+<main class="page">
+    <h1 class="page-title">My orders</h1>
+
+    <section id="orders-login" class="panel" hidden>
+        <p>Log in to see your orders.</p>
+        <button type="button" class="btn" id="orders-login-btn">Log in</button>
+    </section>
+
+    <section id="orders-empty" class="panel" hidden>
+        <p>You have no orders yet.</p>
+        <a class="btn" href="index.html#builder">Build a PC</a>
+    </section>
+
+    <div id="orders-list" class="orders-list"></div>
+</main>
+
+<footer class="footer">
+    <span class="logo">Watts<span>My</span>Budget</span>
+    <nav class="footer-links" aria-label="Footer">
+        <a href="about.html">About</a>
+        <a href="shipping.html">Shipping</a>
+        <a href="returns.html">Returns</a>
+        <a href="contact.html">Contact</a>
+    </nav>
+    <small>&copy; <span id="year"></span> WattsMyBudget. School project demo.</small>
+</footer>
+
+<script src="shared.js"></script>
+<script src="auth-ui.js"></script>
+<script src="orders.js"></script>
+</body>
+</html>

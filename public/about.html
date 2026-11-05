@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>About | WattsMyBudget</title>
+    <meta name="description" content="What WattsMyBudget is and how it picks PC builds.">
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;700&family=Michroma&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="main.css">
+</head>
+<body>
+
+<header class="nav">
+    <a class="logo" href="index.html" aria-label="WattsMyBudget home">Watts<span>My</span>Budget</a>
+    <nav class="nav-links" aria-label="Main">
+        <a href="index.html#builder">Back to builds</a>
+        <span id="auth-slot" class="auth-slot"></span>
+    </nav>
+</header>
+
+<main class="page">
+    <h1 class="page-title">About</h1>
+
+    <section class="panel prose">
+        <h2>What is WattsMyBudget?</h2>
+        <p>WattsMyBudget is a PC build planner. You tell us how much you can spend and what you will use the PC for, and we suggest complete part lists that fit your budget.</p>
+
+        <h2>How the builds are chosen</h2>
+        <ul>
+            <li>We start from the cheapest complete PC and upgrade the part that needs the money most.</li>
+            <li>The use case changes the priorities. Gaming puts more money into the graphics card. Work and study put more into the CPU, memory and storage. Video editing splits the money between CPU and GPU.</li>
+            <li>You get three options: <strong>Value</strong> (about 80% of your budget), <strong>Balanced</strong> (about 92%) and <strong>Max</strong> (all of it).</li>
+            <li>The power supply is picked automatically, so it always has enough power for your CPU and graphics card plus some spare headroom.</li>
+            <li>A stronger CPU can force a better cooler. We do that for you, and tell you when it happens.</li>
+            <li>Not happy with a part? Use <strong>Swap</strong> to change it and see how the total changes.</li>
+        </ul>
+
+        <h2>Where the prices come from</h2>
+        <p>Part prices come from the <a href="https://pcx.com.ph/pages/download-pc-express-pricelist" target="_blank" rel="noopener">PC Express dealer's price list</a> dated November 4, 2026. These are dealer prices, not retail prices, and they may have changed since.</p>
+
+        <h2>About this project</h2>
+        <p>WattsMyBudget is a school project. It is a demo, not a real store: orders are recorded, but nothing is charged and nothing is shipped.</p>
+        <p>Questions or feedback? Visit the <a href="contact.html">Contact</a> page.</p>
+    </section>
+</main>
+
+<footer class="footer">
+    <span class="logo">Watts<span>My</span>Budget</span>
+    <nav class="footer-links" aria-label="Footer">
+        <a href="about.html">About</a>
+        <a href="shipping.html">Shipping</a>
+        <a href="returns.html">Returns</a>
+        <a href="contact.html">Contact</a>
+    </nav>
+    <small>&copy; <span id="year"></span> WattsMyBudget. School project demo.</small>
+</footer>
+
+<script src="shared.js"></script>
+<script src="auth-ui.js"></script>
+<script src="pages.js"></script>
+</body>
+</html>

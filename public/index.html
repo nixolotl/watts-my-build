@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>WattsMyBudget | PC builds for your budget</title>
+    <meta name="description" content="Enter your budget and get PC build combinations that fit it.">
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;700&family=Michroma&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="main.css">
+</head>
+<body>
+
+<header class="nav">
+    <a class="logo" href="#top" aria-label="WattsMyBudget home">Watts<span>My</span>Budget</a>
+    <nav class="nav-links" aria-label="Main">
+        <a href="#how">How it works</a>
+        <a href="#builder" class="btn btn-small">Start building</a>
+        <span id="auth-slot" class="auth-slot"></span>
+        <button type="button" id="cart-open" class="cart-btn" aria-label="Open cart" aria-controls="cart-drawer">
+            <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="9" cy="20" r="1.5"/><circle cx="18" cy="20" r="1.5"/><path d="M2 3h3l2.7 12.4a1 1 0 0 0 1 .8h9.4a1 1 0 0 0 1-.8L21 7H6"/></svg>
+            <span id="cart-count" class="cart-count" hidden>0</span>
+        </button>
+    </nav>
+</header>
+
+<main id="top">
+
+    <!-- HERO + BUILDER FORM -->
+    <section class="hero">
+        <div class="hero-text">
+            <p class="eyebrow">PC build planner</p>
+            <h1>Tell us your budget.<br><em>We'll spec the PC.</em></h1>
+            <p class="lead">Enter what you can spend and what you'll use it for. We'll suggest part combinations that fit.</p>
+        </div>
+
+        <form id="builder" class="card form" novalidate>
+            <label for="budget-number">Your budget</label>
+            <div class="budget-row">
+                <span class="currency" id="currency-symbol">₱</span>
+                <input id="budget-number" type="number" min="56000" max="300000" step="1000" value="90000" inputmode="numeric">
+            </div>
+            <input id="budget-range" type="range" min="56000" max="300000" step="1000" value="90000" aria-label="Budget slider">
+            <div class="range-labels"><span id="range-min"></span><span id="range-max"></span></div>
+
+            <fieldset>
+                <legend>What's it for?</legend>
+                <div class="chips">
+                    <label class="chip"><input type="radio" name="usecase" value="gaming" checked><span>🎮 Gaming</span></label>
+                    <label class="chip"><input type="radio" name="usecase" value="work"><span>💼 Work &amp; study</span></label>
+                    <label class="chip"><input type="radio" name="usecase" value="editing"><span>🎬 Video editing</span></label>
+                </div>
+            </fieldset>
+
+            <button type="submit" class="btn">Show my builds</button>
+            <p id="form-message" class="message" role="alert" hidden></p>
+        </form>
+    </section>
+
+    <!-- RESULTS -->
+    <section id="results" class="results" hidden aria-live="polite">
+        <h2 id="results-title"></h2>
+        <div id="builds" class="builds"></div>
+        <p class="disclaimer">School project demo, not a real store. Prices come from the <a href="https://pcx.com.ph/pages/download-pc-express-pricelist" target="_blank" rel="noopener">PC Express dealer's price list</a> dated Nov 4, 2026 and may have changed since.</p>
+    </section>
+
+    <!-- HOW IT WORKS -->
+    <section id="how" class="how">
+        <h2>How it works</h2>
+        <ol class="steps">
+            <li><strong>Set your budget.</strong> Type it in or drag the slider.</li>
+            <li><strong>Pick your use.</strong> Gaming puts more money in the GPU; work puts more in the CPU and RAM.</li>
+            <li><strong>Compare builds.</strong> Get Value, Balanced, and Max options and see where every dollar goes.</li>
+        </ol>
+    </section>
+
+</main>
+
+<footer class="footer">
+    <span class="logo">Watts<span>My</span>Budget</span>
+    <nav class="footer-links" aria-label="Footer">
+        <a href="about.html">About</a>
+        <a href="shipping.html">Shipping</a>
+        <a href="returns.html">Returns</a>
+        <a href="contact.html">Contact</a>
+    </nav>
+    <small>&copy; <span id="year"></span> WattsMyBudget. Draft build.</small>
+</footer>
+
+<!-- CART DRAWER -->
+<div id="cart-overlay" class="cart-overlay" hidden></div>
+<aside id="cart-drawer" class="cart-drawer" aria-label="Shopping cart" aria-hidden="true">
+    <div class="cart-head">
+        <h2>Your cart</h2>
+        <button type="button" id="cart-close" class="cart-close" aria-label="Close cart">&times;</button>
+    </div>
+    <p id="cart-empty" class="cart-empty">Your cart is empty. Build a PC and add it here.</p>
+    <ul id="cart-items" class="cart-items"></ul>
+    <div class="cart-foot">
+        <div class="cart-total-row"><span>Total</span><strong id="cart-total">₱0</strong></div>
+        <button type="button" id="checkout-btn" class="btn" disabled>Checkout</button>
+    </div>
+</aside>
+
+<!-- SWAP A PART DIALOG -->
+<dialog id="swap-dialog" class="dialog dialog-wide" aria-labelledby="swap-title">
+    <div class="dialog-body">
+        <div class="dialog-head">
+            <h2 id="swap-title">Swap part</h2>
+            <button type="button" class="dialog-close" id="swap-close" aria-label="Close">&times;</button>
+        </div>
+        <p class="hint" id="swap-sub"></p>
+        <ul id="swap-list" class="swap-list"></ul>
+    </div>
+</dialog>
+
+<script src="shared.js"></script>
+<script src="auth-ui.js"></script>
+<script src="parts.js"></script>
+<script src="script.js"></script>
+</body>
+</html>
