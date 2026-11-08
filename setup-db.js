@@ -1,6 +1,6 @@
 /* Creates the tables. Safe to run more than once.
    Usage:  npm run setup-db        (or: node --env-file=.env setup-db.js) */
-const { pool } = require('./db');
+const { pool, query } = require('./db');
 
 const SQL = `
 CREATE TABLE IF NOT EXISTS users (
@@ -50,7 +50,7 @@ CREATE INDEX IF NOT EXISTS idx_orders_created   ON orders(created_at);
 CREATE INDEX IF NOT EXISTS idx_order_items_order ON order_items(order_id);
 `;
 
-pool.query(SQL)
+query(SQL)
     .then(() => console.log('Tables are ready.'))
     .catch((err) => { console.error('Could not create the tables:', err.message); process.exitCode = 1; })
     .finally(() => pool.end());
