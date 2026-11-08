@@ -107,7 +107,7 @@
                 <thead><tr><th>Name</th><th>Email</th><th>Joined</th><th>Orders</th><th>Spent</th></tr></thead>
                 <tbody>${customers.map((u) => `<tr>
                     <td>${esc(u.name)}${u.isAdmin ? ' <span class="edited-tag">Admin</span>' : ''}</td>
-                    <td>${esc(u.email)}</td><td>${esc(fmt(u.createdAt.replace(' ', 'T') + 'Z'))}</td>
+                    <td>${esc(u.email)}</td><td>${esc(fmt(u.createdAt))}</td>
                     <td class="mono">${u.orders}</td><td class="mono">${money(u.spent)}</td></tr>`).join('')}
                 </tbody>
             </table>` : '<p class="muted">No accounts yet.</p>';

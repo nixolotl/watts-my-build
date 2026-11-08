@@ -1,62 +1,23 @@
 /* ============================================
-   WattsMyBudget: database (SQLite, one file: data.sqlite)
-   The tables are created automatically the first time the server starts.
+   WattsMyBudget: database (PostgreSQL)
+   Set DATABASE_URL in .env (local) or in the Vercel project settings (online).
+   Create the tables once with:  npm run setup-db
    ============================================ */
-const path = require('path');
-const Database = require('better-sqlite3');
+const { Pool } = require('pg');
 
-const db = new Database(path.join(__dirname, 'data.sqlite'));
-db.pragma('journal_mode = WAL');
-db.pragma('foreign_keys = ON');
-
-db.exec(`
-    CREATE TABLE IF NOT EXISTS users (
-                                         id            INTEGER PRIMARY KEY AUTOINCREMENT,
-                                         name          TEXT NOT NULL,
-                                         email         TEXT NOT NULL UNIQUE,
-                                         password_hash TEXT NOT NULL,
-                                         created_at    TEXT NOT NULL DEFAULT (datetime('now'))
-        );
-
--- Only a hash of the session token is stored, so a leaked database can't be used to log in.
-    CREATE TABLE IF NOT EXISTS sessions (
-                                            token_hash TEXT PRIMARY KEY,
-                                            user_id    INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-        expires_at INTEGER NOT NULL
-        );
-
-    CREATE TABLE IF NOT EXISTS orders (
-                                          id               TEXT PRIMARY KEY,
-                                          user_id          INTEGER REFERENCES users(id),   -- NULL for guest orders
-        created_at       TEXT NOT NULL,
-        status           TEXT NOT NULL DEFAULT 'Placed',
-        payment_method   TEXT NOT NULL,
-        payment_status   TEXT NOT NULL DEFAULT 'unpaid',  -- PayMongo will update this later
-        total            INTEGER NOT NULL,
-        customer_name    TEXT NOT NULL,
-        customer_email   TEXT NOT NULL,
-        customer_phone   TEXT NOT NULL,
-        customer_address TEXT NOT NULL,
-        customer_city    TEXT NOT NULL,
-        customer_zip     TEXT NOT NULL DEFAULT ''
-        );
-
-    CREATE TABLE IF NOT EXISTS order_items (
-                                               id         INTEGER PRIMARY KEY AUTOINCREMENT,
-                                               order_id   TEXT NOT NULL REFERENCES orders(id) ON DELETE CASCADE,
-        build_id   TEXT NOT NULL,
-        name       TEXT NOT NULL,
-        price      INTEGER NOT NULL,   -- price at the time of purchase
-        qty        INTEGER NOT NULL,
-        parts_json TEXT NOT NULL
-        );
-
-    CREATE INDEX IF NOT EXISTS idx_orders_user ON orders(user_id);
-`);
-
-// Added later: the admin flag. Older databases get the column automatically.
-if (!db.prepare("SELECT 1 FROM pragma_table_info('users') WHERE name = 'is_admin'").get()) {
-    db.exec('ALTER TABLE users ADD COLUMN is_admin INTEGER NOT NULL DEFAULT 0');
+if (!process.env.DATABASE_URL) {
+    throw new Error('DATABASE_URL is not set. Copy .env.example to .env and fill it in.');
 }
 
-module.exports = db;
+const local = /localhost|127\.0\.0\.1/.test(process.env.DATABASE_URL);
+
+const pool = new Pool({
+    connectionString: process.env.DATABASE_URL,
+    ssl: local ? false : { rejectUnauthorized: false }, // hosted databases (Neon, Supabase...) need SSL
+    max: process.env.VERCEL ? 3 : 10                    // serverless: keep few connections per instance
+});
+
+// Used everywhere: await query('SELECT ... WHERE id = $1', [id]) -> rows
+const query = (text, params) => pool.query(text, params).then((r) => r.rows);
+
+module.exports = { pool, query };

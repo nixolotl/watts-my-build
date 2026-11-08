@@ -22,7 +22,7 @@ const TIER_LABELS = { value: 'Value', balanced: 'Balanced', max: 'Max' };
 const ID_PATTERN = /^(gaming|work|editing)-(value|balanced|max)-(\d+(?:-\d+){6})$/;
 const MAX_QTY = 10;
 const PART_PATTERN = /^part-(cpu|gpu|ram|storage|board|case|cooler|psu)-(\d+)$/; // a single part: part-<category>-<number>
-const ALLOWED_PAYMENTS = ['Cash on delivery', 'GCash (demo)', 'Bank transfer (demo)'];
+const ALLOWED_PAYMENTS = ['Cash on delivery', 'GCash', 'Bank transfer'];
 
 // An error that is safe to show to the customer.
 class OrderError extends Error {

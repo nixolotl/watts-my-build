@@ -6,7 +6,6 @@
   "dependencies": {
     "accepts": "^2.0.0",
     "bcryptjs": "^3.0.3",
-    "better-sqlite3": "^13.0.3",
     "body-parser": "^2.3.0",
     "bytes": "^3.1.2",
     "call-bind-apply-helpers": "^1.0.2",
@@ -56,6 +55,7 @@
     "once": "^1.4.0",
     "parseurl": "^1.3.3",
     "path-to-regexp": "^8.4.2",
+    "pg": "^8.23.1",
     "proxy-addr": "^2.0.8",
     "qs": "^6.16.1",
     "range-parser": "^1.3.0",
@@ -78,7 +78,9 @@
   },
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "node server.js"
+    "start": "node server.js",
+    "dev": "node --env-file=.env server.js",
+    "setup-db": "node --env-file=.env setup-db.js"
   },
   "repository": {
     "type": "git",

@@ -9,7 +9,7 @@ const express = require('express');
 const cookieParser = require('cookie-parser');
 const rateLimit = require('express-rate-limit');
 const bcrypt = require('bcryptjs');
-const db = require('./db');
+const { pool, query } = require('./db');
 const { priceCartItem, OrderError, ALLOWED_PAYMENTS } = require('./pricing');
 
 const PORT = process.env.PORT || 3000;
@@ -28,27 +28,28 @@ const publicUser = (u) => ({ id: u.id, name: u.name, email: u.email, isAdmin: !!
 const fail = (status, message) => Object.assign(new Error(message), { status });
 
 /* ---------- sessions ---------- */
-db.prepare('DELETE FROM sessions WHERE expires_at < ?').run(Date.now());
+query('DELETE FROM sessions WHERE expires_at < $1', [Date.now()]).catch((err) => console.error('Session cleanup failed:', err.message));
 
-function startSession(res, userId) {
+async function startSession(res, userId) {
     const token = crypto.randomBytes(32).toString('hex');
     const maxAge = SESSION_DAYS * 24 * 60 * 60 * 1000;
-    db.prepare('INSERT INTO sessions (token_hash, user_id, expires_at) VALUES (?, ?, ?)')
-        .run(sha256(token), userId, Date.now() + maxAge);
+    await query('INSERT INTO sessions (token_hash, user_id, expires_at) VALUES ($1, $2, $3)',
+        [sha256(token), userId, Date.now() + maxAge]);
     res.cookie(COOKIE_NAME, token, { httpOnly: true, sameSite: 'lax', secure: IS_PROD, maxAge });
 }
 
 // Runs before every /api route: works out who is logged in (if anyone).
-app.use('/api', (req, res, next) => {
+app.use('/api', wrap(async (req, res, next) => {
     req.user = null;
     const token = req.cookies[COOKIE_NAME];
     if (token) {
-        req.user = db.prepare(`
+        const rows = await query(`
             SELECT u.id, u.name, u.email, u.is_admin FROM sessions s JOIN users u ON u.id = s.user_id
-            WHERE s.token_hash = ? AND s.expires_at > ?`).get(sha256(token), Date.now()) || null;
+            WHERE s.token_hash = $1 AND s.expires_at > $2`, [sha256(token), Date.now()]);
+        req.user = rows[0] || null;
     }
     next();
-});
+}));
 
 const authLimiter = rateLimit({
     windowMs: 15 * 60 * 1000, limit: 20, standardHeaders: true, legacyHeaders: false,
@@ -67,54 +68,81 @@ app.post('/api/register', authLimiter, wrap(async (req, res) => {
     if (password.length < 8) throw fail(400, 'Your password needs at least 8 characters.');
     if (password.length > 72) throw fail(400, 'Your password is too long (72 characters max).');
 
-    if (db.prepare('SELECT 1 FROM users WHERE email = ?').get(email)) {
-        throw fail(409, 'An account with that email already exists. Try logging in.');
-    }
+    const taken = 'An account with that email already exists. Try logging in.';
+    if ((await query('SELECT 1 FROM users WHERE email = $1', [email])).length) throw fail(409, taken);
     const hash = await bcrypt.hash(password, 12);
-    const info = db.prepare('INSERT INTO users (name, email, password_hash) VALUES (?, ?, ?)').run(name, email, hash);
-    const id = Number(info.lastInsertRowid);
-    startSession(res, id);
-    res.status(201).json({ user: { id, name, email } });
+    let id;
+    try {
+        id = (await query('INSERT INTO users (name, email, password_hash) VALUES ($1, $2, $3) RETURNING id', [name, email, hash]))[0].id;
+    } catch (err) {
+        if (err.code === '23505') throw fail(409, taken); // two sign-ups with the same email at the same moment
+        throw err;
+    }
+    await startSession(res, id);
+    res.status(201).json({ user: { id, name, email, isAdmin: false } });
 }));
 
 app.post('/api/login', authLimiter, wrap(async (req, res) => {
     const email = String(req.body.email || '').trim().toLowerCase();
     const password = String(req.body.password || '');
-    const user = db.prepare('SELECT * FROM users WHERE email = ?').get(email);
+    const user = (await query('SELECT * FROM users WHERE email = $1', [email]))[0];
     const ok = await bcrypt.compare(password, user ? user.password_hash : DUMMY_HASH);
     if (!user || !ok) throw fail(401, 'Wrong email or password.');
-    startSession(res, user.id);
+    await startSession(res, user.id);
     res.json({ user: publicUser(user) });
 }));
 
-app.post('/api/logout', (req, res) => {
+app.post('/api/logout', wrap(async (req, res) => {
     const token = req.cookies[COOKIE_NAME];
-    if (token) db.prepare('DELETE FROM sessions WHERE token_hash = ?').run(sha256(token));
+    if (token) await query('DELETE FROM sessions WHERE token_hash = $1', [sha256(token)]);
     res.clearCookie(COOKIE_NAME);
     res.json({ ok: true });
-});
+}));
 
 app.get('/api/me', (req, res) => res.json({ user: req.user ? publicUser(req.user) : null }));
 
 /* ---------- orders ---------- */
-const insertOrder = db.prepare(`
-    INSERT INTO orders (id, user_id, created_at, status, payment_method, payment_status, total,
-                        customer_name, customer_email, customer_phone, customer_address, customer_city, customer_zip)
-    VALUES (@id, @user_id, @created_at, 'Placed', @payment, 'unpaid', @total,
-            @name, @email, @phone, @address, @city, @zip)`);
-const insertItem = db.prepare(`
-    INSERT INTO order_items (order_id, build_id, name, price, qty, parts_json) VALUES (?, ?, ?, ?, ?, ?)`);
-const saveOrderTx = db.transaction((order, items) => {
-    insertOrder.run(order);
-    for (const i of items) insertItem.run(order.id, i.buildId, i.name, i.price, i.qty, JSON.stringify(i.parts));
-});
+// Saves the order and its items in one transaction: either everything is stored or nothing is.
+async function saveOrder(order, items) {
+    const client = await pool.connect();
+    try {
+        await client.query('BEGIN');
+        await client.query(`
+            INSERT INTO orders (id, user_id, created_at, status, payment_method, payment_status, total,
+                                customer_name, customer_email, customer_phone, customer_address, customer_city, customer_zip)
+            VALUES ($1, $2, $3, 'Placed', $4, 'unpaid', $5, $6, $7, $8, $9, $10, $11)`,
+            [order.id, order.user_id, order.created_at, order.payment, order.total,
+                order.name, order.email, order.phone, order.address, order.city, order.zip]);
+        for (const i of items) {
+            await client.query('INSERT INTO order_items (order_id, build_id, name, price, qty, parts_json) VALUES ($1, $2, $3, $4, $5, $6)',
+                [order.id, i.buildId, i.name, i.price, i.qty, JSON.stringify(i.parts)]);
+        }
+        await client.query('COMMIT');
+    } catch (err) {
+        await client.query('ROLLBACK').catch(() => {});
+        throw err;
+    } finally {
+        client.release();
+    }
+}
 
 // Turns database rows into the same shape the website already expects.
-function formatOrder(o) {
-    const items = db.prepare('SELECT name, price, qty, parts_json FROM order_items WHERE order_id = ? ORDER BY id').all(o.id)
-        .map((i) => ({ name: i.name, price: i.price, qty: i.qty, parts: JSON.parse(i.parts_json) }));
+// Loads the items for several orders with ONE query, then builds the objects the website expects.
+async function formatOrders(rows) {
+    if (!rows.length) return [];
+    const itemRows = await query(
+        'SELECT order_id, name, price, qty, parts_json FROM order_items WHERE order_id = ANY($1) ORDER BY id',
+        [rows.map((o) => o.id)]);
+    const byOrder = {};
+    for (const i of itemRows) {
+        (byOrder[i.order_id] ||= []).push({ name: i.name, price: i.price, qty: i.qty, parts: JSON.parse(i.parts_json) });
+    }
+    return rows.map((o) => formatOrder(o, byOrder[o.id] || []));
+}
+
+function formatOrder(o, items) {
     return {
-        id: o.id, createdAt: o.created_at, status: o.status,
+        id: o.id, createdAt: new Date(o.created_at).toISOString(), status: o.status,
         payment: o.payment_method, paymentStatus: o.payment_status, total: o.total,
         customer: { name: o.customer_name, email: o.customer_email, phone: o.customer_phone, address: o.customer_address, city: o.customer_city, zip: o.customer_zip },
         items
@@ -150,21 +178,22 @@ app.post('/api/orders', wrap(async (req, res) => {
     const createdAt = new Date().toISOString();
     const id = 'WMB-' + createdAt.slice(2, 10).replace(/-/g, '') + '-' + crypto.randomBytes(2).toString('hex').toUpperCase();
 
-    saveOrderTx({
+    await saveOrder({
         id, user_id: req.user ? req.user.id : null, created_at: createdAt, payment: body.payment, total, ...customer
     }, items);
 
-    res.status(201).json({ order: formatOrder(db.prepare('SELECT * FROM orders WHERE id = ?').get(id)) });
+    const saved = await formatOrders(await query('SELECT * FROM orders WHERE id = $1', [id]));
+    res.status(201).json({ order: saved[0] });
 }));
 
-app.get('/api/orders', (req, res) => {
+app.get('/api/orders', wrap(async (req, res) => {
     if (!req.user) return res.status(401).json({ error: 'Log in to see your orders.' });
-    const rows = db.prepare('SELECT * FROM orders WHERE user_id = ? ORDER BY created_at DESC').all(req.user.id);
-    res.json({ orders: rows.map(formatOrder) });
-});
+    const rows = await query('SELECT * FROM orders WHERE user_id = $1 ORDER BY created_at DESC', [req.user.id]);
+    res.json({ orders: await formatOrders(rows) });
+}));
 
 /* ---------- admin ---------- */
-// An admin is a normal account with is_admin = 1. Make one with:  node make-admin.js you@example.com
+// An admin is a normal account with is_admin = true. Make one with:  node --env-file=.env make-admin.js you@example.com
 const ORDER_STATUSES = ['Placed', 'Processing', 'Shipped', 'Delivered', 'Cancelled'];
 const PAYMENT_STATUSES = ['unpaid', 'paid', 'refunded'];
 
@@ -175,53 +204,54 @@ function requireAdmin(req, res, next) {
     next();
 }
 
-app.get('/api/admin/stats', requireAdmin, (req, res) => {
-    const n = (sql, ...p) => db.prepare(sql).get(...p).n;
+app.get('/api/admin/stats', requireAdmin, wrap(async (req, res) => {
     const manila = new Date(Date.now() + 8 * 3600 * 1000).toISOString().slice(0, 10); // "today" in Philippine time
     const since = new Date(manila + 'T00:00:00+08:00').toISOString();
-    const byStatus = db.prepare('SELECT status, COUNT(*) AS n FROM orders GROUP BY status').all();
-    res.json({
-        orders: n('SELECT COUNT(*) AS n FROM orders'),
-        today: n('SELECT COUNT(*) AS n FROM orders WHERE created_at >= ?', since),
-        revenue: n("SELECT COALESCE(SUM(total), 0) AS n FROM orders WHERE status != 'Cancelled'"),
-        paid: n("SELECT COALESCE(SUM(total), 0) AS n FROM orders WHERE payment_status = 'paid'"),
-        customers: n('SELECT COUNT(*) AS n FROM users'),
-        byStatus: Object.fromEntries(byStatus.map((r) => [r.status, r.n]))
-    });
-});
+    // ::int because Postgres returns COUNT/SUM as text unless we cast them
+    const [totals] = await query(`
+        SELECT COUNT(*)::int AS orders,
+               COUNT(*) FILTER (WHERE created_at >= $1)::int AS today,
+               COALESCE(SUM(total) FILTER (WHERE status != 'Cancelled'), 0)::int AS revenue,
+               COALESCE(SUM(total) FILTER (WHERE payment_status = 'paid'), 0)::int AS paid
+        FROM orders`, [since]);
+    const [{ n: customers }] = await query('SELECT COUNT(*)::int AS n FROM users');
+    const byStatus = await query('SELECT status, COUNT(*)::int AS n FROM orders GROUP BY status');
+    res.json({ ...totals, customers, byStatus: Object.fromEntries(byStatus.map((r) => [r.status, r.n])) });
+}));
 
-app.get('/api/admin/orders', requireAdmin, (req, res) => {
+app.get('/api/admin/orders', requireAdmin, wrap(async (req, res) => {
     const status = String(req.query.status || '');
-    const q = String(req.query.q || '').trim().toLowerCase().replace(/[%_]/g, '');
+    const q = String(req.query.q || '').trim().toLowerCase().replace(/[%_\\]/g, '');
     const where = [];
     const params = [];
-    if (ORDER_STATUSES.includes(status)) { where.push('status = ?'); params.push(status); }
+    if (ORDER_STATUSES.includes(status)) { params.push(status); where.push(`status = $${params.length}`); }
     if (q) {
-        where.push('(lower(id) LIKE ? OR lower(customer_name) LIKE ? OR lower(customer_email) LIKE ?)');
-        params.push(`%${q}%`, `%${q}%`, `%${q}%`);
+        params.push(`%${q}%`);
+        const p = `$${params.length}`;
+        where.push(`(lower(id) LIKE ${p} OR lower(customer_name) LIKE ${p} OR lower(customer_email) LIKE ${p})`);
     }
-    const rows = db.prepare(`SELECT * FROM orders ${where.length ? 'WHERE ' + where.join(' AND ') : ''}
-                             ORDER BY created_at DESC LIMIT 200`).all(...params);
-    res.json({ orders: rows.map(formatOrder) });
-});
+    const rows = await query(`SELECT * FROM orders ${where.length ? 'WHERE ' + where.join(' AND ') : ''}
+                              ORDER BY created_at DESC LIMIT 200`, params);
+    res.json({ orders: await formatOrders(rows) });
+}));
 
-app.patch('/api/admin/orders/:id', requireAdmin, (req, res) => {
+app.patch('/api/admin/orders/:id', requireAdmin, wrap(async (req, res) => {
     const { status, paymentStatus } = req.body || {};
     if (status !== undefined && !ORDER_STATUSES.includes(status)) throw fail(400, 'Unknown order status.');
     if (paymentStatus !== undefined && !PAYMENT_STATUSES.includes(paymentStatus)) throw fail(400, 'Unknown payment status.');
-    const info = db.prepare('UPDATE orders SET status = COALESCE(?, status), payment_status = COALESCE(?, payment_status) WHERE id = ?')
-        .run(status ?? null, paymentStatus ?? null, req.params.id);
-    if (!info.changes) throw fail(404, 'Order not found.');
-    res.json({ order: formatOrder(db.prepare('SELECT * FROM orders WHERE id = ?').get(req.params.id)) });
-});
+    const rows = await query('UPDATE orders SET status = COALESCE($1, status), payment_status = COALESCE($2, payment_status) WHERE id = $3 RETURNING *',
+        [status ?? null, paymentStatus ?? null, req.params.id]);
+    if (!rows.length) throw fail(404, 'Order not found.');
+    res.json({ order: (await formatOrders(rows))[0] });
+}));
 
-app.get('/api/admin/customers', requireAdmin, (req, res) => {
-    res.json({ customers: db.prepare(`
-            SELECT u.id, u.name, u.email, u.created_at AS createdAt, u.is_admin AS isAdmin, COUNT(o.id) AS orders,
-                   COALESCE(SUM(CASE WHEN o.status != 'Cancelled' THEN o.total END), 0) AS spent
+app.get('/api/admin/customers', requireAdmin, wrap(async (req, res) => {
+    res.json({ customers: await query(`
+            SELECT u.id, u.name, u.email, u.created_at AS "createdAt", u.is_admin AS "isAdmin", COUNT(o.id)::int AS orders,
+                   COALESCE(SUM(CASE WHEN o.status != 'Cancelled' THEN o.total END), 0)::int AS spent
             FROM users u LEFT JOIN orders o ON o.user_id = u.id
-            GROUP BY u.id ORDER BY u.created_at DESC LIMIT 200`).all() });
-});
+            GROUP BY u.id ORDER BY u.created_at DESC LIMIT 200`) });
+}));
 
 app.use('/api', (req, res) => res.status(404).json({ error: 'Not found.' }));
 
@@ -236,4 +266,8 @@ app.use((err, req, res, next) => {
     res.status(500).json({ error: 'Something went wrong on our side. Please try again.' });
 });
 
-app.listen(PORT, () => console.log(`WattsMyBudget running at http://localhost:${PORT}`));
+// Vercel runs the app as a function (no listen). Locally, start a normal server.
+if (require.main === module) {
+    app.listen(PORT, () => console.log(`WattsMyBudget running at http://localhost:${PORT}`));
+}
+module.exports = app;
