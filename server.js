@@ -1,7 +1,5 @@
 /* ============================================
    WattsMyBudget: web server
-   Run with:  node server.js   then open http://localhost:3000
-   It serves the website (public/ folder) AND the API (/api/...).
    ============================================ */
 const path = require('path');
 const crypto = require('crypto');
@@ -18,7 +16,7 @@ const SESSION_DAYS = 14;
 const COOKIE_NAME = 'wmb_session';
 
 const app = express();
-app.set('trust proxy', 1); // hosts like Render/Railway sit behind a proxy
+app.set('trust proxy', 1);
 app.use(express.json({ limit: '100kb' }));
 app.use(cookieParser());
 
@@ -31,7 +29,7 @@ const fail = (status, message) => Object.assign(new Error(message), { status });
 async function startSession(res, userId) {
     const token = crypto.randomBytes(32).toString('hex');
     const maxAge = SESSION_DAYS * 24 * 60 * 60 * 1000;
-    const expiresAt = Date.now() + maxAge; // ✅ Passes number to BIGINT column
+    const expiresAt = Date.now() + maxAge;
 
     await query('DELETE FROM sessions WHERE expires_at < $1', [Date.now()]).catch(() => {});
     await query('INSERT INTO sessions (token_hash, user_id, expires_at) VALUES ($1, $2, $3)',
@@ -39,8 +37,6 @@ async function startSession(res, userId) {
     res.cookie(COOKIE_NAME, token, { httpOnly: true, sameSite: 'lax', secure: IS_PROD, maxAge });
 }
 
-// Runs before every /api route: works out who is logged in (if anyone).
-// Runs before every /api route: works out who is logged in (if anyone).
 app.use('/api', wrap(async (req, res, next) => {
     req.user = null;
     const token = req.cookies[COOKIE_NAME];
@@ -59,12 +55,13 @@ const authLimiter = rateLimit({
 });
 
 /* ---------- accounts ---------- */
-const DUMMY_HASH = bcrypt.hashSync('not-a-real-password', 12); // makes "unknown email" take as long as "wrong password"
+const DUMMY_HASH = bcrypt.hashSync('not-a-real-password', 12);
 
 app.post('/api/register', authLimiter, wrap(async (req, res) => {
-    const name = String(req.body.name || '').trim();
-    const email = String(req.body.email || '').trim().toLowerCase();
-    const password = String(req.body.password || '');
+    const body = req.body || {};
+    const name = String(body.name || '').trim();
+    const email = String(body.email || '').trim().toLowerCase();
+    const password = String(body.password || '');
     if (!name || name.length > 100) throw fail(400, 'Enter your name.');
     if (!/^\S+@\S+\.\S+$/.test(email) || email.length > 200) throw fail(400, 'Enter a valid email address.');
     if (password.length < 8) throw fail(400, 'Your password needs at least 8 characters.');
@@ -72,12 +69,13 @@ app.post('/api/register', authLimiter, wrap(async (req, res) => {
 
     const taken = 'An account with that email already exists. Try logging in.';
     if ((await query('SELECT 1 FROM users WHERE email = $1', [email])).length) throw fail(409, taken);
+    
     const hash = await bcrypt.hash(password, 12);
     let id;
     try {
         id = (await query('INSERT INTO users (name, email, password_hash) VALUES ($1, $2, $3) RETURNING id', [name, email, hash]))[0].id;
     } catch (err) {
-        if (err.code === '23505') throw fail(409, taken); // two sign-ups with the same email at the same moment
+        if (err.code === '23505') throw fail(409, taken);
         throw err;
     }
     await startSession(res, id);
@@ -85,8 +83,9 @@ app.post('/api/register', authLimiter, wrap(async (req, res) => {
 }));
 
 app.post('/api/login', authLimiter, wrap(async (req, res) => {
-    const email = String(req.body.email || '').trim().toLowerCase();
-    const password = String(req.body.password || '');
+    const body = req.body || {};
+    const email = String(body.email || '').trim().toLowerCase();
+    const password = String(body.password || '');
     const user = (await query('SELECT * FROM users WHERE email = $1', [email]))[0];
     const ok = await bcrypt.compare(password, user ? user.password_hash : DUMMY_HASH);
     if (!user || !ok) throw fail(401, 'Wrong email or password.');
@@ -104,7 +103,6 @@ app.post('/api/logout', wrap(async (req, res) => {
 app.get('/api/me', (req, res) => res.json({ user: req.user ? publicUser(req.user) : null }));
 
 /* ---------- orders ---------- */
-// Saves the order and its items in one transaction: either everything is stored or nothing is.
 async function saveOrder(order, items) {
     const client = await pool.connect();
     try {
@@ -128,8 +126,6 @@ async function saveOrder(order, items) {
     }
 }
 
-// Turns database rows into the same shape the website already expects.
-// Loads the items for several orders with ONE query, then builds the objects the website expects.
 async function formatOrders(rows) {
     if (!rows.length) return [];
     const itemRows = await query(
@@ -151,7 +147,6 @@ function formatOrder(o, items) {
     };
 }
 
-// The browser already checks these, but the server must check again: never trust the browser.
 function cleanCustomer(c) {
     c = c || {};
     const out = {
@@ -175,8 +170,8 @@ app.post('/api/orders', wrap(async (req, res) => {
     if (!ALLOWED_PAYMENTS.includes(body.payment)) throw new OrderError('Choose a payment method.');
     const customer = cleanCustomer(body.customer);
 
-    const items = body.items.map(priceCartItem);                       // prices come from the server
-    const total = items.reduce((sum, i) => sum + i.price * i.qty, 0);  // and so does the total
+    const items = body.items.map(priceCartItem);
+    const total = items.reduce((sum, i) => sum + i.price * i.qty, 0);
     const createdAt = new Date().toISOString();
     const id = 'WMB-' + createdAt.slice(2, 10).replace(/-/g, '') + '-' + crypto.randomBytes(2).toString('hex').toUpperCase();
 
@@ -195,7 +190,6 @@ app.get('/api/orders', wrap(async (req, res) => {
 }));
 
 /* ---------- admin ---------- */
-// An admin is a normal account with is_admin = true. Make one with:  node --env-file=.env make-admin.js you@example.com
 const ORDER_STATUSES = ['Placed', 'Processing', 'Shipped', 'Delivered', 'Cancelled'];
 const PAYMENT_STATUSES = ['unpaid', 'paid', 'refunded'];
 
@@ -207,9 +201,8 @@ function requireAdmin(req, res, next) {
 }
 
 app.get('/api/admin/stats', requireAdmin, wrap(async (req, res) => {
-    const manila = new Date(Date.now() + 8 * 3600 * 1000).toISOString().slice(0, 10); // "today" in Philippine time
+    const manila = new Date(Date.now() + 8 * 3600 * 1000).toISOString().slice(0, 10);
     const since = new Date(manila + 'T00:00:00+08:00').toISOString();
-    // ::int because Postgres returns COUNT/SUM as text unless we cast them
     const [totals] = await query(`
         SELECT COUNT(*)::int AS orders,
                COUNT(*) FILTER (WHERE created_at >= $1)::int AS today,
@@ -256,11 +249,8 @@ app.get('/api/admin/customers', requireAdmin, wrap(async (req, res) => {
 }));
 
 app.use('/api', (req, res) => res.status(404).json({ error: 'Not found.' }));
-
-/* ---------- the website itself ---------- */
 app.use(express.static(path.join(__dirname, 'public')));
 
-/* ---------- errors ---------- */
 app.use((err, req, res, next) => {
     if (err.type === 'entity.parse.failed') return res.status(400).json({ error: 'Bad request.' });
     if (err.status && err.status < 500) return res.status(err.status).json({ error: err.message });
@@ -268,7 +258,6 @@ app.use((err, req, res, next) => {
     res.status(500).json({ error: 'Something went wrong on our side. Please try again.' });
 });
 
-// Vercel runs the app as a function (no listen). Locally, start a normal server.
 if (require.main === module) {
     app.listen(PORT, () => console.log(`WattsMyBudget running at http://localhost:${PORT}`));
 }
