@@ -47,9 +47,11 @@
             <label class="field">Message
                 <textarea id="c-message" rows="6" required></textarea>
             </label>
-            <button type="submit" class="btn">Send message</button>
+            <input type="text" id="c-gotcha" name="_gotcha" tabindex="-1" autocomplete="off" aria-hidden="true" style="display:none">
+            <button type="submit" class="btn" id="contact-send">Send message</button>
             <p class="message" id="contact-error" role="alert" hidden></p>
-            <p class="hint" id="contact-note">This opens your email app with the message ready to send. If nothing opens, email us directly at <span data-contact-email></span>.</p>
+            <p class="hint" id="contact-success" role="status" hidden></p>
+            <p class="hint" id="contact-note">We will reply to the email address you enter. You can also email us directly at <span data-contact-email></span>.</p>
         </form>
     </div>
 </main>
